@@ -1,0 +1,61 @@
+version: "3.8"
+
+# =============================================================
+# Internal Package Management System — Phase 1
+# repo-server: hosts RPM packages, serves via nginx over HTTP
+# clients: no internet, pull packages ONLY from repo-server
+# =============================================================
+
+networks:
+  pkgnet:
+    driver: bridge
+
+services:
+
+  repo-server:
+    build:
+      context: ./repo-server
+    container_name: repo-server
+    hostname: repo-server
+    networks:
+      - pkgnet
+    volumes:
+      - ./packages/downloaded_rpms:/packages/downloaded_rpms
+    ports:
+      - "8080:80"   # browse repo at http://localhost:8080
+
+  web-server:
+    build:
+      context: ./clients
+    container_name: web-server
+    hostname: web-server
+    networks:
+      - pkgnet
+    depends_on:
+      - repo-server
+    environment:
+      - REPO_URL=http://repo-server/repos/yum_local/
+
+  db-server:
+    build:
+      context: ./clients
+    container_name: db-server
+    hostname: db-server
+    networks:
+      - pkgnet
+    depends_on:
+      - repo-server
+    environment:
+      - REPO_URL=http://repo-server/repos/yum_local/
+
+  backup-server:
+    build:
+      context: ./clients
+    container_name: backup-server
+    hostname: backup-server
+    networks:
+      - pkgnet
+    depends_on:
+      - repo-server
+    environment:
+      - REPO_URL=http://repo-server/repos/yum_local/
