@@ -22,7 +22,7 @@ services:
     volumes:
       - ./packages/downloaded_rpms:/packages/downloaded_rpms
     ports:
-      - "8080:80"   # browse repo at http://localhost:8080
+      - "8001:80"   # browse repo at http://localhost:8001
 
   web-server:
     build:
