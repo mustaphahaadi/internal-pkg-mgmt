@@ -48,5 +48,5 @@ dnf install --disablerepo="*" --enablerepo="yum_local" -y wget
 Open http://localhost:8080/repos/yum_local/ in your browser.
 
 ## 📚 What I Learned
-*(Update this as you go!)*
+*(Updating as I go)*
 - ...
