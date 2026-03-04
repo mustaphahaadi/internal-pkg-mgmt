@@ -58,5 +58,5 @@ Open http://localhost:8080/repos/yum_local/ in your browser.
 ```
 
 ### Phase 2
-*(Updating as I go)*
+*(I will update this as I go)*
 - ...
