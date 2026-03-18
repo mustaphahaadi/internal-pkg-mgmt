@@ -7,6 +7,7 @@
 
 - name: Configure local YUM repository on all clients
   hosts: clients
+  become: yes
 
   vars:
     repo_name: "{{ lookup('env', 'REPO_NAME') | default('yum_local') }}"
@@ -15,21 +16,24 @@
   tasks:
 
     - name: Disable all default repos
-      shell: docker exec {{ inventory_hostname }} dnf config-manager --disable "*"
+      command: dnf config-manager --disable "*"
       ignore_errors: yes
 
     - name: Create yum_local repo config file
-      shell: |
-        docker exec {{ inventory_hostname }} bash -c 'cat > /etc/yum.repos.d/yum_local.repo << EOF
-        [{{ repo_name }}]
-        name={{ repo_name }}
-        baseurl={{ repo_url }}
-        enabled=1
-        gpgcheck=0
-        EOF'
+      copy:
+        dest: /etc/yum.repos.d/yum_local.repo
+        content: |
+          [{{ repo_name }}]
+          name={{ repo_name }}
+          baseurl={{ repo_url }}
+          enabled=1
+          gpgcheck=0
+        owner: root
+        group: root
+        mode: '0644'
 
     - name: Verify repo is recognized by DNF
-      shell: "docker exec {{ inventory_hostname }} dnf repolist"
+      command: dnf repolist
       register: repolist_output
 
     - name: Show repolist output

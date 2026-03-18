@@ -7,6 +7,7 @@
 
 - name: Install package from local YUM repo
   hosts: clients
+  become: yes
 
   vars:
     pkg_name: "{{ pkg_name }}"    # passed in via -e flag
@@ -14,10 +15,14 @@
   tasks:
 
     - name: Install {{ pkg_name }} from yum_local
-      shell: "docker exec {{ inventory_hostname }} dnf install --disablerepo='*' --enablerepo='yum_local' -y {{ pkg_name }}"
+      dnf:
+        name: "{{ pkg_name }}"
+        state: present
+        disablerepo: "*"
+        enablerepo: "yum_local"
 
     - name: Confirm package is installed
-      shell: "docker exec {{ inventory_hostname }} {{ pkg_name }} --version"
+      command: "{{ pkg_name }} --version"
       register: pkg_version
       ignore_errors: yes
 

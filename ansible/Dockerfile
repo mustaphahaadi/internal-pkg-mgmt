@@ -1,8 +1,8 @@
 FROM rockylinux:8
 
-# Install Ansible, Docker CLI, and SSH client
+# Install Ansible + SSH client tools
 RUN dnf install -y epel-release && \
-    dnf install -y ansible openssh-clients docker && \
+    dnf install -y ansible openssh-clients sshpass && \
     dnf clean all
 
 # Set working directory
