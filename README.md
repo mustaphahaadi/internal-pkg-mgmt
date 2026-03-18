@@ -15,8 +15,8 @@ I'm building this project incrementally to learn:
 ## 🗺️ Project Phases
 | Phase | Description | Status |
 |-------|-------------|--------|
-| Phase 1 | Local YUM repo + Docker multi-container setup | 🔧 In Progress |
-| Phase 2 | Bash + Ansible automation | 📋 Planned |
+| Phase 1 | Local YUM repo + Docker multi-container setup | Completed |
+| Phase 2 | Bash + Ansible automation | 🔧 In Progress |
 | Phase 3 | GPG signing + multi-server patch rollout | 📋 Planned |
 | Phase 4 | CI/CD pipeline integration | 📋 Planned |
 
@@ -44,6 +44,48 @@ dnf install --disablerepo="*" --enablerepo="yum_local" -y wget
 ./scripts/add-package.sh /path/to/your.rpm
 ```
 
+## Phase 2 — Automation with Bash + Ansible
+
+> Goal: Stop doing things manually. One command configures
+> every server. One command installs any package everywhere.
+
+### What was added
+- `ansible-controller` container running Ansible playbooks
+- Ansible configures the yum repo on ALL clients automatically
+- Bash script to add new packages and refresh repo metadata
+- Cron job that downloads packages nightly and updates the repo
+- `Makefile` for standardized project commands
+- `.env` file to centralize all configuration
+- Health checks so clients wait for repo-server to be truly ready
+- `test-phase1.sh` to validate the full Phase 1 flow
+
+### How to use it
+
+#### Configure all clients at once
+```bash
+make ansible-configure
+```
+
+#### Install a package on all clients at once
+```bash
+make ansible-install PKG=wget
+```
+
+#### Add a new RPM to the repo
+```bash
+make add-pkg PKG=./packages/downloaded_rpms/curl.rpm
+```
+
+#### Trigger nightly sync manually
+```bash
+make sync
+```
+
+#### Run all tests
+```bash
+make test
+```
+
 ### Browse the repo
 Open http://localhost:8080/repos/yum_local/ in your browser.
 
@@ -57,6 +99,20 @@ Open http://localhost:8080/repos/yum_local/ in your browser.
 - **Enterprise Simulation**: Understood how package management, networking, and file serving integrate to simulate a secure, air-gapped environment.
 ```
 
-### Phase 2
-*(I will update this as I go)*
-- ...
+### 🧠 What I Learned in Phase 2
+
+In Phase 2, I learned Ansible fundamentals — how inventory files
+define which hosts to manage, how playbooks describe the desired
+state of a system, and how `ansible_connection=docker` lets Ansible
+manage containers without needing SSH. I built a `Makefile` to
+standardize all project commands, which taught me how real DevOps
+teams reduce human error by wrapping complex commands into simple
+targets. I wrote safer bash scripts using `set -e` and input
+validation, and learned how `.env` files keep configuration
+separate from code. The cron sync script taught me how scheduled
+automation works inside containers, and combining it with
+`createrepo --update` showed me how package repos stay fresh in
+production environments. The biggest shift in Phase 2 was moving
+from "doing things manually" to "defining what should be true and
+letting automation make it so" — which is the core philosophy of
+DevOps.
