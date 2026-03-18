@@ -87,7 +87,7 @@ make test
 ```
 
 ### Browse the repo
-Open http://localhost:8080/repos/yum_local/ in your browser.
+Open http://localhost:8081/repos/yum_local/ in your browser.
 
 ## 📚 What I Learned
 ### Phase 1
