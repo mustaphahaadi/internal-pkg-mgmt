@@ -1,0 +1,41 @@
+---
+# -------------------------------------------------------
+# configure-repo.yml
+# Configures the yum_local repo on ALL client containers
+# Run: make ansible-configure
+# -------------------------------------------------------
+
+- name: Configure local YUM repository on all clients
+  hosts: clients
+  become: yes
+
+  vars:
+    repo_name: "{{ lookup('env', 'REPO_NAME') | default('yum_local') }}"
+    repo_url: "http://repo-server/repos/{{ repo_name }}/"
+
+  tasks:
+
+    - name: Disable all default repos
+      command: dnf config-manager --disable "*"
+      ignore_errors: yes
+
+    - name: Create yum_local repo config file
+      copy:
+        dest: /etc/yum.repos.d/yum_local.repo
+        content: |
+          [{{ repo_name }}]
+          name={{ repo_name }}
+          baseurl={{ repo_url }}
+          enabled=1
+          gpgcheck=0
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Verify repo is recognized by DNF
+      command: dnf repolist
+      register: repolist_output
+
+    - name: Show repolist output
+      debug:
+        var: repolist_output.stdout_lines
