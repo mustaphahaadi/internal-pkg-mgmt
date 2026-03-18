@@ -7,7 +7,7 @@
 
 - name: Configure local YUM repository on all clients
   hosts: clients
-  become: yes
+  become: true
 
   vars:
     repo_name: "{{ lookup('env', 'REPO_NAME') | default('yum_local') }}"

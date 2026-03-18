@@ -103,8 +103,8 @@ Open http://localhost:8081/repos/yum_local/ in your browser.
 
 In Phase 2, I learned Ansible fundamentals — how inventory files
 define which hosts to manage, how playbooks describe the desired
-state of a system, and how `ansible_connection=docker` lets Ansible
-manage containers without needing SSH. I built a `Makefile` to
+state of a system, and how `ansible_connection=ssh` lets Ansible
+manage containerized hosts over the internal Docker network. I built a `Makefile` to
 standardize all project commands, which taught me how real DevOps
 teams reduce human error by wrapping complex commands into simple
 targets. I wrote safer bash scripts using `set -e` and input
