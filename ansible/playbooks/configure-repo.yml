@@ -15,9 +15,13 @@
 
   tasks:
 
+    - name: Ensure DNF config-manager plugin is available
+      dnf:
+        name: dnf-plugins-core
+        state: present
+
     - name: Disable all default repos
       command: dnf config-manager --disable "*"
-      ignore_errors: yes
 
     - name: Create yum_local repo config file
       copy:
