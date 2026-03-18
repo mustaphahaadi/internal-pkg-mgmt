@@ -16,7 +16,7 @@ I'm building this project incrementally to learn:
 | Phase | Description | Status |
 |-------|-------------|--------|
 | Phase 1 | Local YUM repo + Docker multi-container setup | Completed |
-| Phase 2 | Bash + Ansible automation | 🔧 In Progress |
+| Phase 2 | Bash + Ansible automation | Completed |
 | Phase 3 | GPG signing + multi-server patch rollout | 📋 Planned |
 | Phase 4 | CI/CD pipeline integration | 📋 Planned |
 
@@ -51,7 +51,7 @@ dnf install --disablerepo="*" --enablerepo="yum_local" -y wget
 
 ### What was added
 - `ansible-controller` container running Ansible playbooks
-- Ansible configures the yum repo on ALL clients automatically
+- Ansible configures the yum repo on ALL clients automatically over SSH
 - Bash script to add new packages and refresh repo metadata
 - Cron job that downloads packages nightly and updates the repo
 - `Makefile` for standardized project commands
@@ -71,6 +71,11 @@ make ansible-configure
 make ansible-install PKG=wget
 ```
 
+#### Verify all services are healthy
+```bash
+docker-compose ps
+```
+
 #### Add a new RPM to the repo
 ```bash
 make add-pkg PKG=./packages/downloaded_rpms/curl.rpm
@@ -88,6 +93,10 @@ make test
 
 ### Browse the repo
 Open http://localhost:8081/repos/yum_local/ in your browser.
+
+### Ansible connection model
+- `ansible-controller` connects to `web-server`, `db-server`, and `backup-server` over the internal Docker network.
+- Inventory uses `ansible_connection=ssh` and lab credentials from `ansible/inventory.ini`.
 
 ## 📚 What I Learned
 ### Phase 1
