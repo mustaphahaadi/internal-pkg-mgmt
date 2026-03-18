@@ -1,9 +1,8 @@
-#version: "3.8"
+version: "3.8"
 
 # =============================================================
-# Internal Package Management System — Phase 1
-# repo-server: hosts RPM packages, serves via nginx over HTTP
-# clients: no internet, pull packages ONLY from repo-server
+# Internal Package Management System — Phase 2
+# Added: ansible-controller, healthchecks, .env support
 # =============================================================
 
 networks:
@@ -20,9 +19,17 @@ services:
     networks:
       - pkgnet
     volumes:
-      - ./packages/downloaded_rpms:/packages/downloaded_rpms
+      - ./packages/downloaded_rpms:${PACKAGE_SOURCE}
+      - ./scripts:/scripts
     ports:
-      - "8001:80"   # browse repo at http://localhost:8001
+      - "${REPO_SERVER_PORT}:80"
+    # Health check — clients wait for this before starting
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   web-server:
     build:
@@ -32,9 +39,10 @@ services:
     networks:
       - pkgnet
     depends_on:
-      - repo-server
+      repo-server:
+        condition: service_healthy      # waits until repo is truly ready
     environment:
-      - REPO_URL=http://repo-server/repos/yum_local/
+      - REPO_URL=http://repo-server/repos/${REPO_NAME}/
 
   db-server:
     build:
@@ -44,9 +52,10 @@ services:
     networks:
       - pkgnet
     depends_on:
-      - repo-server
+      repo-server:
+        condition: service_healthy
     environment:
-      - REPO_URL=http://repo-server/repos/yum_local/
+      - REPO_URL=http://repo-server/repos/${REPO_NAME}/
 
   backup-server:
     build:
@@ -56,6 +65,28 @@ services:
     networks:
       - pkgnet
     depends_on:
-      - repo-server
+      repo-server:
+        condition: service_healthy
     environment:
-      - REPO_URL=http://repo-server/repos/yum_local/
+      - REPO_URL=http://repo-server/repos/${REPO_NAME}/
+
+  # -------------------------------------------------------
+  # ANSIBLE CONTROLLER — NEW IN PHASE 2
+  # Runs Ansible playbooks against all client containers
+  # -------------------------------------------------------
+  ansible-controller:
+    build:
+      context: ./ansible
+    container_name: ansible-controller
+    hostname: ansible-controller
+    networks:
+      - pkgnet
+    depends_on:
+      repo-server:
+        condition: service_healthy
+    volumes:
+      - ./ansible:/ansible         # mount playbooks live
+    environment:
+      - REPO_NAME=${REPO_NAME}
+    # Keep running so we can exec into it
+    command: tail -f /dev/null
