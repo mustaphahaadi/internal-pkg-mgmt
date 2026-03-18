@@ -86,6 +86,7 @@ services:
         condition: service_healthy
     volumes:
       - ./ansible:/ansible         # mount playbooks live
+      - /var/run/docker.sock:/var/run/docker.sock  # allow docker command access
     environment:
       - REPO_NAME=${REPO_NAME}
     # Keep running so we can exec into it
