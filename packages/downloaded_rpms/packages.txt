@@ -1,0 +1,11 @@
+# -------------------------------------------------------
+# packages.txt
+# List packages you want auto-downloaded by cron-sync.sh
+# One package name per line
+# Comments start with #
+# -------------------------------------------------------
+
+wget
+curl
+vim-enhanced
+tree
