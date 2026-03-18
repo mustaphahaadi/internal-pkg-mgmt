@@ -1,108 +1,101 @@
 # Internal Package Management System
 
-Simulates an air-gapped enterprise Linux environment where servers have no internet access and all packages come from a controlled internal YUM repository.
+An end-to-end DevOps lab that simulates an air-gapped enterprise Linux environment.
 
-## Learning Goals
-I am building this project incrementally to learn:
-- Linux package management (YUM, DNF, RPM)
-- Docker and container networking
-- nginx as an internal package server
-- Ansible automation (Phase 2)
-- CI/CD pipeline integration (Phase 4)
+Clients cannot install from the internet. Every package comes from a controlled internal YUM repository, then gets rolled out consistently using Ansible automation.
 
-## Project Phases
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Local YUM repo and Docker multi-container setup | Completed |
-| Phase 2 | Bash and Ansible automation | Completed |
-| Phase 3 | GPG signing and multi-server patch rollout | Planned |
-| Phase 4 | CI/CD pipeline integration | Planned |
+## Why This Project Matters
+- Demonstrates real-world package governance patterns used in restricted enterprise networks.
+- Shows the progression from manual administration to repeatable infrastructure automation.
+- Combines Linux package management, container orchestration, and configuration management in one workflow.
 
-## Quick Start (Phase 1)
+## Tech Stack
+- Rocky Linux 8 (container base)
+- Docker Compose (multi-service environment)
+- nginx + createrepo (internal YUM hosting)
+- Bash scripting (repo maintenance and sync)
+- Ansible (fleet-wide client configuration and installs)
+- Makefile + .env (operational consistency)
 
-### Prerequisites
-- Docker
-- Docker Compose
+## Project Status
+| Phase | Focus | Status |
+|-------|-------|--------|
+| Phase 1 | Internal YUM repository + multi-container foundation | Completed |
+| Phase 2 | Bash + Ansible automation | Completed |
+| Phase 3 | GPG signing + multi-server patch rollout | Planned |
+| Phase 4 | CI/CD integration | Planned |
 
-### Start the stack
+## Architecture Snapshot
+| Service | Responsibility |
+|--------|----------------|
+| `repo-server` | Hosts RPMs, updates metadata, serves repo via nginx |
+| `web-server` | Client host managed by Ansible |
+| `db-server` | Client host managed by Ansible |
+| `backup-server` | Client host managed by Ansible |
+| `ansible-controller` | Executes playbooks across all clients over SSH |
+
+Network: all services communicate on the `pkgnet` Docker bridge network.
+
+Repository endpoints:
+- Internal: `http://repo-server/repos/yum_local/`
+- Host machine: `http://localhost:8081/repos/yum_local/`
+
+## Demo Flow
+
+### 1) Start the environment
 ```bash
 docker-compose up --build
 ```
 
-### Install a package on one client
-```bash
-docker exec -it web-server bash
-dnf install --disablerepo="*" --enablerepo="yum_local" -y wget
-```
-
-### Add a new package to the repo
-```bash
-./scripts/add-package.sh /path/to/your.rpm
-```
-
-## Phase 2: Automation with Bash and Ansible
-
-Goal: stop manual operations. One command configures all servers. One command installs a package everywhere.
-
-### What was added
-- `ansible-controller` container running playbooks
-- Ansible configures `yum_local` on all clients over SSH
-- Bash scripts for package add and metadata refresh
-- Cron sync flow for nightly package updates
-- `Makefile` targets for repeatable operations
-- `.env` for centralized configuration
-- Health checks so clients wait for `repo-server` readiness
-- `test-phase1.sh` to validate the core flow
-
-### Common commands
-
-#### Configure all clients
+### 2) Configure all clients with one command
 ```bash
 make ansible-configure
 ```
 
-#### Install package on all clients
+### 3) Install a package everywhere
 ```bash
 make ansible-install PKG=wget
 ```
 
-#### Add a new RPM
+### 4) Add a new RPM to the internal repository
 ```bash
 make add-pkg PKG=./packages/downloaded_rpms/curl.rpm
 ```
 
-#### Trigger sync manually
+### 5) Run manual sync and validation
 ```bash
 make sync
-```
-
-#### Run tests
-```bash
 make test
-```
-
-#### Check service health
-```bash
 docker-compose ps
 ```
 
-### Repository URL
-Browse packages at:
+## Automation Highlights
+- Health-gated startup: clients wait for `repo-server` to be healthy.
+- Centralized config: environment values managed via `.env`.
+- Repeatable ops: standardized commands through `Makefile` targets.
+- Fleet management: Ansible playbooks configure repo settings and install packages across all clients.
+- Scheduled maintenance model: cron-style sync script keeps metadata and packages fresh.
 
-http://localhost:8081/repos/yum_local/
-
-### Ansible connection model
-- `ansible-controller` connects to `web-server`, `db-server`, and `backup-server` over the `pkgnet` bridge network.
-- Inventory uses `ansible_connection=ssh` with lab credentials in `ansible/inventory.ini`.
+## Key Commands
+```bash
+make up
+make down
+make rebuild
+make ansible-configure
+make ansible-install PKG=wget
+make add-pkg PKG=./packages/downloaded_rpms/curl.rpm
+make sync
+make test
+```
 
 ## What I Learned
+- How internal package repositories are structured and maintained (`createrepo --update`).
+- How to model production-like server groups with Docker networking.
+- How to convert repetitive shell work into declarative Ansible playbooks.
+- How to make operations safer through health checks, environment-driven config, and consistent command interfaces.
+- How DevOps maturity grows from manual execution toward deterministic, auditable automation.
 
-### Phase 1
-- YUM repositories are RPM directories plus metadata generated by `createrepo`.
-- Docker Compose makes it straightforward to model multi-server environments.
-- nginx can cleanly serve RPM artifacts for internal `baseurl` usage.
-- Bash scripting helps make repetitive package operations reliable.
-- Repo serving, networking, and package management tie together to simulate an air-gapped environment.
-
-### Phase 2
-In Phase 2, I learned how Ansible inventory defines target hosts and how playbooks encode desired state. I moved from ad hoc commands to repeatable operations using `make` targets and playbooks. I also learned to keep configuration separate via `.env`, automate update workflows with cron-style scripts, and keep repository metadata fresh with `createrepo --update`. The biggest mindset shift was moving from manual execution to declarative automation.
+## Next Improvements
+- GPG sign repository metadata and enforce signature checks on clients.
+- Add staged rollout strategy for package updates.
+- Integrate CI/CD to run automated validation on every infrastructure change.
